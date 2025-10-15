@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherSense Pro | Environmental Monitoring Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --danger: #e63946;
+            --dark: #1d3557;
+            --darker: #14213d;
+            --light: #f1faee;
+            --gray: #8d99ae;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--darker), var(--dark));
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .logo-text h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(to right, #fff, #a8dadc);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent; /* This ensures proper fallback */
+}
+
+
+        .logo-text p {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 25px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .info-item i {
+            color: var(--success);
+            font-size: 18px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .metric-title {
+            font-size: 16px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .metric-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+.metric-value {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(to right, #fff, #a8dadc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+        .metric-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .trend.up {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+
+        .trend.down {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--danger);
+        }
+
+        /* Charts Container */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            grid-column: span 1;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .chart-container {
+            height: 320px;
+            position: relative;
+        }
+
+        /* Alerts Container */
+        .alerts-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .alerts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .alert-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .alert-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .alert-icon.info {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .alert-icon.warning {
+            background: linear-gradient(135deg, #f72585, #b5179e);
+        }
+
+        .alert-icon.danger {
+            background: linear-gradient(135deg, #e63946, #d00000);
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .alert-desc {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .alert-time {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 30px;
+            border-top: 1px solid var(--glass-border);
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        /* Color coding for metric cards */
+        .temp-card .metric-icon { background: rgba(230, 57, 70, 0.2); color: #e63946; }
+        .humidity-card .metric-icon { background: rgba(76, 201, 240, 0.2); color: #4cc9f0; }
+        .soil-card .metric-icon { background: rgba(114, 9, 183, 0.2); color: #7209b7; }
+        .ph-card .metric-icon { background: rgba(67, 97, 238, 0.2); color: #4361ee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-cloud-sun"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>WeatherSense Pro</h1>
+                    <p>Intelligent Environmental Monitoring</p>
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <span id="current-time">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-satellite-dish"></i>
+                    <span class="status-indicator status-online"></span>
+                    <span>System Online</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card metric-card temp-card fade-in">
+                <div class="metric-header">
+                    <div class="metric-title">TEMPERATURE</div>
+                    <div class="metric-icon">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="temp-value">--°C</div>
+                <div class="metric-footer">
+                    <div>Feels like: <span id="feels-like">--°C</span></div>
+                    <div class="trend up"><i class="fas fa-arrow-up"></i> 2.1°</div>
+                </div>
+            </div>
+
+            <div class="card metric-card humidity-card fade-in delay-1">
+                <div class="metric-header">
+                    <div class="metric-title">HUMIDITY</div>
+                    <div class="metric-icon">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="humidity-value">--%</div>
+                <div class="metric-footer">
+                    <div>Dew Point: <span id="dew-point">--°C</span></div>
+                    <div class="trend down"><i class="fas fa-arrow-down"></i> 5%</div>
+                </div>
+            </div>
+
+            <div class="card metric-card soil-card fade-in delay-2">
+                <div class="metric-header">
+                    <div class="metric-title">SOIL MOISTURE</div>
+                    <div class="metric-icon">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="soil-value">--%</div>
+                <div class="metric-footer">
+                    <div>Ideal: 40-60%</div>
+                    <div class="trend up"><i class="fas fa-arrow-up"></i> 8%</div>
+                </div>
+            </div>
+
+            <div class="card metric-card ph-card fade-in delay-3">
+                <div class="metric-header">
+                    <div class="metric-title">pH LEVEL</div>
+                    <div class="metric-icon">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="ph-value">--</div>
+                <div class="metric-footer">
+                    <div>Optimal: 6.0-7.0</div>
+                    <div class="trend down"><i class="fas fa-arrow-down"></i> 0.2</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="card chart-card fade-in delay-1">
+                <div class="chart-header">
+                    <div class="chart-title">Environmental Trends (24 Hours)</div>
+                    <div class="chart-actions">
+                        <button class="btn active" id="btn-temp">Temperature</button>
+                        <button class="btn" id="btn-humidity">Humidity</button>
+                        <button class="btn" id="btn-soil">Soil Moisture</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trend-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="card chart-card fade-in delay-2">
+                <div class="chart-header">
+                    <div class="chart-title">Parameter Distribution</div>
+                    <div class="chart-actions">
+                        <button class="btn active">Today</button>
+                        <button class="btn">Week</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="distribution-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card alerts-container fade-in delay-3">
+            <div class="alerts-header">
+                <div class="chart-title">System Alerts & Notifications</div>
+                <div class="chart-actions">
+                    <button class="btn active">All</button>
+                    <button class="btn">Critical</button>
+                    <button class="btn">Warnings</button>
+                </div>
+            </div>
+            <div class="alerts-list">
+                <div class="alert-item">
+                    <div class="alert-icon warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">Soil Moisture Low</div>
+                        <div class="alert-desc">Soil moisture level dropped below optimal range (35%)</div>
+                    </div>
+                    <div class="alert-time">10:24 AM</div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-icon info">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">pH Level Normal</div>
+                        <div class="alert-desc">Soil pH is within optimal range for crops (6.8)</div>
+                    </div>
+                    <div class="alert-time">09:45 AM</div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-icon danger">
+                        <i class="fas fa-temperature-high"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">High Temperature Alert</div>
+                        <div class="alert-desc">Temperature exceeded 35°C threshold at 2:15 PM</div>
+                    </div>
+                    <div class="alert-time">Yesterday</div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-icon info">
+                        <i class="fas fa-cloud-rain"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">Rainfall Detected</div>
+                        <div class="alert-desc">Light rainfall (2.5mm) detected in the area</div>
+                    </div>
+                    <div class="alert-time">Yesterday</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>WeatherSense Pro &copy; 2023 | Real-time Environmental Monitoring System | Data updates every 30 seconds</p>
+        </footer>
+    </div>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('current-time').textContent = 
+                now.toLocaleDateString('en-US', options);
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Generate sophisticated mock data
+        function generateMockData() {
+            const now = new Date();
+            const hours = [];
+            const temperatures = [];
+            const humidities = [];
+            const soilMoistures = [];
+            
+            for (let i = 23; i >= 0; i--) {
+                const time = new Date(now);
+                time.setHours(now.getHours() - i);
+                hours.push(time.getHours() + ':00');
+                
+                // Generate realistic values with natural patterns
+                const baseTemp = 22 + Math.sin(i * 0.3) * 8;
+                temperatures.push(+(baseTemp + (Math.random() * 1.5 - 0.75)).toFixed(1));
+                
+                const baseHumidity = 65 + Math.sin(i * 0.4) * 20;
+                humidities.push(+(baseHumidity + (Math.random() * 4 - 2)).toFixed(1));
+                
+                const baseSoil = 55 + Math.sin(i * 0.2) * 15;
+                soilMoistures.push(+(baseSoil + (Math.random() * 3 - 1.5)).toFixed(1));
+            }
+            
+            return { hours, temperatures, humidities, soilMoistures };
+        }
+
+        // Initialize charts with professional styling
+        function initializeCharts() {
+            const data = generateMockData();
+            
+            // Trend Chart
+            const trendCtx = document.getElementById('trend-chart').getContext('2d');
+            const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+            gradient.addColorStop(1, 'rgba(239, 68, 68, 0.05)');
+            
+            const trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: data.hours,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: data.temperatures,
+                        borderColor: '#e63946',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#e63946',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#f1faee',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(29, 53, 87, 0.8)',
+                            titleColor: '#f1faee',
+                            bodyColor: '#f1faee',
+                            borderColor: '#4361ee',
+                            borderWidth: 1,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8d99ae'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#8d99ae'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Distribution Chart
+            const distributionCtx = document.getElementById('distribution-chart').getContext('2d');
+            const distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Optimal', 'Attention', 'Critical'],
+                    datasets: [{
+                        data: [72, 18, 10],
+                        backgroundColor: [
+                            '#4cc9f0',
+                            '#f72585',
+                            '#e63946'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#f1faee',
+                                font: {
+                                    size: 13
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(29, 53, 87, 0.8)',
+                            bodyColor: '#f1faee',
+                            borderColor: '#4361ee',
+                            borderWidth: 1
+                        }
+                    },
+                    cutout: '75%'
+                }
+            });
+
+            // Update metric values with mock data
+            document.getElementById('temp-value').textContent = data.temperatures[23] + '°C';
+            document.getElementById('feels-like').textContent = (data.temperatures[23] + 2.3) + '°C';
+            document.getElementById('humidity-value').textContent = data.humidities[23] + '%';
+            document.getElementById('dew-point').textContent = (data.temperatures[23] - (100 - data.humidities[23])/5).toFixed(1) + '°C';
+            document.getElementById('soil-value').textContent = data.soilMoistures[23] + '%';
+            document.getElementById('ph-value').textContent = (6.5 + (Math.random() * 0.4 - 0.2)).toFixed(1);
+
+            // Chart toggle functionality
+            document.getElementById('btn-temp').addEventListener('click', function() {
+                setActiveButton(this);
+                
+                const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(230, 57, 70, 0.4)');
+                gradient.addColorStop(1, 'rgba(230, 57, 70, 0.05)');
+                
+                trendChart.data.datasets[0].data = data.temperatures;
+                trendChart.data.datasets[0].label = 'Temperature (°C)';
+                trendChart.data.datasets[0].borderColor = '#e63946';
+                trendChart.data.datasets[0].backgroundColor = gradient;
+                trendChart.data.datasets[0].pointBackgroundColor = '#e63946';
+                trendChart.update();
+            });
+
+            document.getElementById('btn-humidity').addEventListener('click', function() {
+                setActiveButton(this);
+                
+                const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(76, 201, 240, 0.4)');
+                gradient.addColorStop(1, 'rgba(76, 201, 240, 0.05)');
+                
+                trendChart.data.datasets[0].data = data.humidities;
+                trendChart.data.datasets[0].label = 'Humidity (%)';
+                trendChart.data.datasets[0].borderColor = '#4cc9f0';
+                trendChart.data.datasets[0].backgroundColor = gradient;
+                trendChart.data.datasets[0].pointBackgroundColor = '#4cc9f0';
+                trendChart.update();
+            });
+
+            document.getElementById('btn-soil').addEventListener('click', function() {
+                setActiveButton(this);
+                
+                const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(114, 9, 183, 0.4)');
+                gradient.addColorStop(1, 'rgba(114, 9, 183, 0.05)');
+                
+                trendChart.data.datasets[0].data = data.soilMoistures;
+                trendChart.data.datasets[0].label = 'Soil Moisture (%)';
+                trendChart.data.datasets[0].borderColor = '#7209b7';
+                trendChart.data.datasets[0].backgroundColor = gradient;
+                trendChart.data.datasets[0].pointBackgroundColor = '#7209b7';
+                trendChart.update();
+            });
+
+            function setActiveButton(activeBtn) {
+                document.querySelectorAll('.chart-actions .btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                activeBtn.classList.add('active');
+            }
+            
+            // Simulate real-time updates
+            setInterval(() => {
+                const temp = 22 + Math.sin(Date.now() * 0.0001) * 8 + (Math.random() * 2 - 1);
+                document.getElementById('temp-value').textContent = temp.toFixed(1) + '°C';
+                document.getElementById('feels-like').textContent = (temp + 2.3).toFixed(1) + '°C';
+                
+                const humidity = 65 + Math.sin(Date.now() * 0.00005) * 15 + (Math.random() * 3 - 1.5);
+                document.getElementById('humidity-value').textContent = humidity.toFixed(1) + '%';
+                
+                const soil = 55 + Math.sin(Date.now() * 0.00003) * 10 + (Math.random() * 2 - 1);
+                document.getElementById('soil-value').textContent = soil.toFixed(1) + '%';
+            }, 5000);
+        }
+
+        // Initialize the dashboard when page loads
+        document.addEventListener('DOMContentLoaded', initializeCharts);
+    </script>
+</body>
+</html>
+
+
+
